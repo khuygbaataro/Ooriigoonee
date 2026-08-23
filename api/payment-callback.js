@@ -12,12 +12,8 @@ import { isAuthorized, unauthorized, json } from '../lib/auth.js';
  * ⚠️ Энэ URL-ийг хэрэглэгчийн browser рүү redirect болгож болохгүй —
  *    нууц түлхүүр задарна. Хэрэглэгчийг /payment-success рүү буцаана.
  */
-export default async function handler(request) {
-  const url = new URL(request.url, 'http://localhost');
-
-  if (request.method !== 'POST' && request.method !== 'GET') {
-    return json({ ok: false, error: 'method not allowed' }, 405);
-  }
+async function handler(request) {
+  const url = new URL(request.url);
 
   if (!isAuthorized(request, url)) return unauthorized();
 
@@ -48,3 +44,6 @@ export default async function handler(request) {
 
   return json({ ok: true, order, delivered });
 }
+
+// GET (гараар тест) болон POST (төлбөрийн систем) хоёуланг дэмжинэ
+export { handler as GET, handler as POST };

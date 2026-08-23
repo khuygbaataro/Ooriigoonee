@@ -36,10 +36,7 @@ function parseSignedRequest(signedRequest) {
   return JSON.parse(b64urlDecode(payload).toString('utf8'));
 }
 
-export default async function handler(request) {
-  if (request.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
-  }
+export async function POST(request) {
   if (!config.appSecret) {
     return new Response(JSON.stringify({ error: 'APP_SECRET тохируулаагүй' }), {
       status: 500,

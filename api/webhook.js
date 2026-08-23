@@ -70,30 +70,33 @@ async function processBody(body) {
   }
 }
 
-export default async function handler(request) {
-  const url = new URL(request.url, 'http://localhost');
+/**
+ * ⚠️ Vercel нь `export default`-ыг хуучин (req, res) хэлбэр гэж үздэг.
+ * Web стандарт Request/Response ашиглахын тулд ЗААВАЛ нэрлэсэн
+ * GET / POST экспорт байх ёстой (@vercel/node → createWebHandler).
+ */
 
-  // ── Facebook-ийн webhook баталгаажуулалт ──
-  if (request.method === 'GET') {
-    const mode = url.searchParams.get('hub.mode');
-    const token = url.searchParams.get('hub.verify_token');
-    const challenge = url.searchParams.get('hub.challenge');
+/** Facebook-ийн webhook баталгаажуулалт. */
+export async function GET(request) {
+  const url = new URL(request.url);
+  const mode = url.searchParams.get('hub.mode');
+  const token = url.searchParams.get('hub.verify_token');
+  const challenge = url.searchParams.get('hub.challenge');
 
-    if (mode === 'subscribe' && token && token === env.verifyToken) {
-      console.log('[webhook] баталгаажлаа ✅');
-      return new Response(challenge ?? '', {
-        status: 200,
-        headers: { 'Content-Type': 'text/plain' },
-      });
-    }
-    return new Response('Forbidden', { status: 403 });
+  if (mode === 'subscribe' && token && token === env.verifyToken) {
+    console.log('[webhook] баталгаажлаа ✅');
+    return new Response(challenge ?? '', {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain' },
+    });
   }
 
-  if (request.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
-  }
+  console.warn('[webhook] баталгаажуулалт амжилтгүй — verify_token таарахгүй');
+  return new Response('Forbidden', { status: 403 });
+}
 
-  // ── Бодит event-үүд ──
+/** Бодит messaging event-үүд. */
+export async function POST(request) {
   const rawBody = await request.text();
 
   if (!verifySignature(rawBody, request.headers.get('x-hub-signature-256'))) {

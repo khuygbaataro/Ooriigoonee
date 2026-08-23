@@ -1,7 +1,7 @@
 import { configReport } from '../lib/config.js';
 
 /** Тохиргоо бүрэн эсэхийг шалгах — deploy хийсний дараа эхлээд үүнийг нээ. */
-export default async function handler() {
+export async function GET() {
   return new Response(
     JSON.stringify(
       {

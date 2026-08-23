@@ -6,8 +6,8 @@ import { isAuthorized, unauthorized, json } from '../lib/auth.js';
  * Deploy хийсний дараа НЭГ УДАА дуудна:
  *   https://<domain>/api/setup?secret=<ADMIN_SECRET>
  */
-export default async function handler(request) {
-  const url = new URL(request.url, 'http://localhost');
+export async function GET(request) {
+  const url = new URL(request.url);
   if (!isAuthorized(request, url)) return unauthorized();
 
   const result = await installMenu();

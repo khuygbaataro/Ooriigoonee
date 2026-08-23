@@ -230,6 +230,19 @@ Claude-ийн хүсэлтэд сервер талын **fallback** идэвхж
 
 ---
 
+## ⚠️ Чухал: API файлын экспортын хэлбэр
+
+`api/*.js` доторх функцууд **нэрлэсэн HTTP method экспорт** ашиглана:
+
+```js
+export async function GET(request) { … }
+export async function POST(request) { … }
+```
+
+`export default` бичиж **болохгүй**. Vercel-ийн `@vercel/node` нь default экспортыг
+хуучин `(req, res)` хэлбэр гэж үздэг тул `Response` буцаахад хариу явахгүй —
+GET хүсэлт өлгөгдөж timeout болж, POST нь 500 өгнө.
+
 ## 🔒 Аюулгүй байдал
 
 - Webhook бүрийг `X-Hub-Signature-256` HMAC гарын үсгээр шалгана.

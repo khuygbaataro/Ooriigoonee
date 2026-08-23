@@ -12,8 +12,8 @@ import { isAuthorized, unauthorized, json } from '../lib/auth.js';
  *   /api/admin?secret=X&action=report&psid=123    → бүрэн тайланг текстээр харах
  *   /api/admin?secret=X&action=reset&psid=123     → хэрэглэгчийн өгөгдлийг устгах
  */
-export default async function handler(request) {
-  const url = new URL(request.url, 'http://localhost');
+export async function GET(request) {
+  const url = new URL(request.url);
   if (!isAuthorized(request, url)) return unauthorized();
 
   const action = url.searchParams.get('action') ?? 'view';
