@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Төлбөр — Таны Хувийн Профайл</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/assets/style.css">
+<style>
+  .order-box {
+    background: var(--brand-soft);
+    border: 1px dashed var(--brand);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    margin: 24px 0;
+  }
+  .order-code {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--brand);
+    margin: 8px 0;
+  }
+  .bank {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 8px 14px;
+    font-size: 15px;
+    margin: 16px 0;
+  }
+  .bank dt { color: var(--muted); }
+  .bank dd { margin: 0; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="logo" href="/"><span class="mark">✨</span> Өөрийгөө нээ</a>
+  </div>
+</header>
+
+<main class="wrap legal">
+
+  <h1>🧠 Таны Хувийн Профайл</h1>
+  <p class="updated">Бүрэн анализ — 10 бүлэг, AI-аар танд тусгайлан бэлдсэн</p>
+
+  <div class="order-box">
+    <div style="font-size:14px;color:var(--muted)">Таны захиалгын код</div>
+    <div class="order-code" id="order">—</div>
+    <div style="font-size:14px;color:var(--muted)">
+      Гүйлгээний утга дээр ЗААВАЛ энэ кодыг бичнэ үү
+    </div>
+  </div>
+
+  <h2>Төлбөр хийх</h2>
+
+  <!-- ⬇️ Өөрийн банкны мэдээллээ бичнэ үү -->
+  <dl class="bank">
+    <dt>Банк</dt><dd>[Банкны нэр]</dd>
+    <dt>Дансны дугаар</dt><dd>[0000 0000 0000]</dd>
+    <dt>Хүлээн авагч</dt><dd>[Нэр]</dd>
+    <dt>Дүн</dt><dd>[19,900₮]</dd>
+    <dt>Гүйлгээний утга</dt><dd id="order2">—</dd>
+  </dl>
+
+  <div class="callout">
+    <strong>Төлбөр хийсний дараа:</strong> Messenger рүү буцаж очоод хүлээгээрэй.
+    Гүйлгээ баталгаажмагц таны бүрэн тайлан чат руу шууд ирнэ (ихэвчлэн хэдхэн минут).
+  </div>
+
+  <h2>Юу багтах вэ?</h2>
+  <ul>
+    <li>🧬 Зан чанарын дэлгэрэнгүй анализ</li>
+    <li>💪 Таны 5 гол давуу тал</li>
+    <li>⚠️ Сул тал болон анзаардаггүй хэв маяг</li>
+    <li>❤️ Харилцааны хэв маяг</li>
+    <li>🗣️ Хүмүүстэй харилцах арга</li>
+    <li>💼 Ажил, карьерын тохирох орчин</li>
+    <li>🧠 Стрессийн үед гардаг зан төлөв</li>
+    <li>🔥 Таны далд потенциал</li>
+    <li>📈 Өөрийгөө хөгжүүлэх 5 зөвлөмж</li>
+    <li>💬 Танд тохирох харилцааны зөвлөгөө</li>
+  </ul>
+
+  <p style="text-align:center;margin-top:32px">
+    <!-- ⬇️ YOUR_PAGE-г Facebook хуудасныхаа нэрээр солино уу -->
+    <a class="btn" href="https://m.me/YOUR_PAGE">💬 Messenger рүү буцах</a>
+  </p>
+
+  <p style="font-size:14px;margin-top:24px">
+    Асуудал гарвал <a href="mailto:hello@example.com">hello@example.com</a> руу
+    захиалгын кодоо бичиж илгээгээрэй.
+  </p>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="/">Нүүр</a>
+      <a href="/privacy">Нууцлал</a>
+      <a href="/terms">Нөхцөл</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const order = new URLSearchParams(location.search).get('order');
+  if (order && /^[a-z0-9]{1,32}$/i.test(order)) {
+    document.getElementById('order').textContent = order.toUpperCase();
+    document.getElementById('order2').textContent = order.toUpperCase();
+  }
+</script>
+</body>
+</html>

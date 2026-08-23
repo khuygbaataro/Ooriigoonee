@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Өгөгдөл устгах — Өөрийгөө нээ</title>
+<meta name="description" content="Өөрийгөө нээ чатботоос хувийн өгөгдлөө хэрхэн устгуулах вэ.">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="logo" href="/"><span class="mark">✨</span> Өөрийгөө нээ</a>
+    <nav class="site">
+      <a href="/privacy">Нууцлал</a>
+      <a href="/terms">Нөхцөл</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap legal">
+
+  <h1>Хэрэглэгчийн өгөгдөл устгах</h1>
+  <p class="updated">Сүүлд шинэчилсэн: 2026 оны 8 дугаар сарын 23</p>
+
+  <div id="status" class="callout" hidden>
+    <strong>✅ Таны хүсэлт биелэгдлээ.</strong><br>
+    Баталгааны код: <code id="code"></code><br>
+    Энэ кодтой холбоотой бүх хувийн өгөгдөл манай системээс устгагдсан болно.
+  </div>
+
+  <p>
+    Та «Өөрийгөө нээ» үйлчилгээнд хадгалагдсан бүх хувийн өгөгдлөө хүссэн үедээ
+    устгуулах эрхтэй. Дараах 3 аргын аль нэгийг сонгоно уу.
+  </p>
+
+  <h2>1-р арга — Messenger дотроос (хамгийн хурдан)</h2>
+  <ul>
+    <li>Манай Facebook хуудасны чатыг нээнэ.</li>
+    <li>«<strong>устгах</strong>» гэж бичээд илгээнэ.</li>
+    <li>Баталгаажуулсны дараа өгөгдөл тань шууд устна.</li>
+  </ul>
+
+  <h2>2-р арга — Facebook тохиргооноос</h2>
+  <ul>
+    <li>Facebook → <strong>Settings &amp; Privacy</strong> → <strong>Settings</strong></li>
+    <li><strong>Apps and Websites</strong> хэсгийг нээнэ</li>
+    <li>«Өөрийгөө нээ» аппыг сонгоод <strong>Remove</strong> дарна</li>
+    <li>
+      Facebook манай сервер рүү устгах хүсэлт автоматаар илгээх бөгөөд бид
+      баталгааны код буцаана.
+    </li>
+  </ul>
+
+  <h2>3-р арга — Имэйлээр</h2>
+  <p>
+    <a href="mailto:hello@example.com?subject=Өгөгдөл устгах хүсэлт">hello@example.com</a>
+    хаяг руу «Өгөгдөл устгах хүсэлт» гэсэн гарчигтай захиа илгээнэ үү.
+    Мессенжер дэх нэрээ бичвэл хурдан олоход тусална.
+    Хүсэлтийг <strong>30 хоногийн дотор</strong> биелүүлнэ.
+  </p>
+
+  <h2>Юу устгагдах вэ?</h2>
+  <ul>
+    <li>Таны Page-Scoped ID (PSID)</li>
+    <li>Тестийн 10 хариулт</li>
+    <li>Үүсгэсэн зан чанарын анализ ба бүрэн тайлан</li>
+    <li>Чат дахь ярианы түүх</li>
+    <li>Захиалгын код, төлбөрийн төлөв</li>
+  </ul>
+
+  <h2>Юу үлдэх вэ?</h2>
+  <ul>
+    <li>
+      Устгалын баталгааны код (өөрөө хувийн мэдээлэл агуулаагүй) — хуулийн
+      шаардлагын үүднээс 90 хоног хадгална.
+    </li>
+    <li>
+      Нягтлан бодох бүртгэлийн хууль шаардвал төлбөрийн гүйлгээний баримт
+      төлбөрийн үйлчилгээ үзүүлэгч дээр үлдэж болно.
+    </li>
+    <li>
+      Facebook Messenger дэх ярианы түүх — үүнийг Facebook хадгалдаг тул
+      Messenger дотроосоо өөрөө устгах шаардлагатай.
+    </li>
+  </ul>
+
+  <div class="callout">
+    <strong>Анхаар:</strong> Өгөгдлөө устгасны дараа таны өмнөх анализыг сэргээх
+    боломжгүй. Төлбөртэй тайлангаа хадгалж авахыг хүсвэл эхлээд хуулж хадгална уу.
+  </div>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="/">Нүүр</a>
+      <a href="/privacy">Нууцлалын бодлого</a>
+      <a href="/terms">Үйлчилгээний нөхцөл</a>
+    </div>
+    <div>© <span id="year">2026</span> Өөрийгөө нээ.</div>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+  const code = new URLSearchParams(location.search).get('code');
+  if (code && /^[a-z0-9]{1,32}$/i.test(code)) {
+    document.getElementById('code').textContent = code;
+    document.getElementById('status').hidden = false;
+  }
+</script>
+</body>
+</html>

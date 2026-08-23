@@ -1,0 +1,23 @@
+{
+  "name": "messenger-ai-personality-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Facebook Messenger AI chatbot — 10 асуултын зан чанарын тест, Claude-аар анализ, OpenAI-аар харилцаа. Vercel serverless.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "check": "node --check api/webhook.js && node --check lib/flow.js && echo OK"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
+    "@vercel/functions": "^3.9.5",
+    "openai": "^7.5.0"
+  },
+  "devDependencies": {
+    "vercel": "^50.0.0"
+  }
+}
