@@ -17,7 +17,13 @@ import { handleEvent } from '../lib/flow.js';
 /** Гарын үсгийг шалгах — өөр хэн нэгэн webhook руу хүсэлт илгээхээс хамгаална. */
 function verifySignature(rawBody, header) {
   if (!env.appSecret) {
-    console.warn('[webhook] APP_SECRET алга — гарын үсэг шалгахгүй байна (зөвхөн dev)');
+    // Production дээр APP_SECRET байхгүй бол хаалттай байна (fail closed).
+    // Үгүй бол хэн ч хуурамч event илгээх боломжтой болно.
+    if (process.env.VERCEL) {
+      console.error('[webhook] ❌ APP_SECRET тохируулаагүй — хүсэлтийг татгалзлаа. Vercel → Settings → Environment Variables дээр APP_SECRET нэмнэ үү.');
+      return false;
+    }
+    console.warn('[webhook] APP_SECRET алга — гарын үсэг шалгахгүй байна (зөвхөн локал dev)');
     return true;
   }
   if (!header) return false;
