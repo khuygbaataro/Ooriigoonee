@@ -48,8 +48,10 @@ export async function GET(request) {
   }
 
   if (action === 'report') {
-    if (!session.profile) return json({ ok: false, error: 'тайлан бэлэн болоогүй' }, 404);
-    return new Response(formatFullReport(session.profile), {
+    if (!session.profile || !session.fullReport) {
+      return json({ ok: false, error: 'бүрэн тайлан хараахан үүсээгүй (төлбөр төлөгдөөгүй)' }, 404);
+    }
+    return new Response(formatFullReport(session.profile, session.fullReport), {
       status: 200,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
