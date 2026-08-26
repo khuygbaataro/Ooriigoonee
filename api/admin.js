@@ -41,6 +41,9 @@ export async function GET(request) {
       psid,
       state: session.state,
       paid: session.paid,
+      paidAt: session.paidAt ? new Date(session.paidAt).toISOString() : null,
+      // Маргаан гарвал баримт дээр юу уншигдсаныг эндээс харна
+      paymentProof: session.paymentProof ?? null,
       answered: session.answers.length,
       type: session.profile?.type_name ?? null,
       updatedAt: new Date(session.updatedAt).toISOString(),
