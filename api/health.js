@@ -42,16 +42,50 @@ async function check(name, fn) {
   }
 }
 
+/**
+ * Ботыг ажиллуулахад ЗААВАЛ хэрэгтэй тохиргоо.
+ * Vercel дээр хувьсагчийн НЭР үүсгээд утгыг нь хоосон орхих нь элбэг — тэр
+ * тохиолдолд байхгүйтэй адил тул эндээс шууд харагдана.
+ */
+function missingCritical(env) {
+  const required = {
+    PAGE_ACCESS_TOKEN: 'Facebook рүү мессеж илгээх боломжгүй',
+    VERIFY_TOKEN: 'Webhook баталгаажуулалт бүтэхгүй',
+    APP_SECRET: 'Production дээр webhook бүх хүсэлтийг татгалзана',
+    ANTHROPIC_API_KEY: 'Анализ огт хийгдэхгүй',
+    REDIS: 'KV_REST_API_URL / KV_REST_API_TOKEN хоосон — session нь санах ойд хадгалагдана. Serverless дээр хэрэглэгчийн хариултууд алга болно',
+  };
+  return Object.entries(required)
+    .filter(([key]) => !env[key])
+    .map(([key, why]) => `${key}: ${why}`);
+}
+
 export async function GET(request) {
   const url = new URL(request.url);
+  const env = configReport();
+  const warnings = missingCritical(env);
   const base = {
-    ok: true,
+    ok: warnings.length === 0,
     service: 'messenger-ai-personality-bot',
     time: new Date().toISOString(),
-    env: configReport(),
+    warnings,
+    env,
   };
 
   if (url.searchParams.get('deep') !== '1') return json(base);
+
+  // ADMIN_SECRET хоосон бол «unauthorized» гэдэг нь төөрөгдүүлнэ — жинхэнэ
+  // шалтгааныг нь хэлье.
+  if (!config.adminSecret) {
+    return json(
+      {
+        ...base,
+        error:
+          'ADMIN_SECRET хоосон байна. Vercel → Settings → Environment Variables дээр ADMIN_SECRET-д утга оруулаад дахин deploy хийвэл ?deep=1 шалгалт ажиллана.',
+      },
+      503,
+    );
+  }
   if (!isAuthorized(request, url)) return unauthorized();
 
   const results = await Promise.all([
