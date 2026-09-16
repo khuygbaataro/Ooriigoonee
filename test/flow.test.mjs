@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { config } from '../lib/config.js';
 import { set, getSession, emptySession, touchActivity } from '../lib/store.js';
-import { formatFullReport } from '../lib/report.js';
 import { matchAnswer, QUESTIONS, TOTAL, renderQuestion } from '../lib/quiz.js';
+import { guideSystem } from '../lib/prompts.js';
 
 /** Redis тохируулаагүй тул store нь санах ойн горимд ажиллана. */
 
@@ -33,8 +33,8 @@ test('хуучин «төлсөн» хэрэглэгч дахин эхлэх ш�
   assert.equal(session.paid, undefined, 'хуучин paid талбар үлдэх ЁСГҮЙ');
   assert.equal(session.paymentProof, undefined, 'хуучин paymentProof үлдэх ЁСГҮЙ');
 
-  // Тайлан нь хадгалагдсан хэвээр
-  assert.deepEqual(session.fullReport, { personality: 'x' });
+  // Бүрэн тайлан гэж байхаа больсон — талбар нь цэвэрлэгдэнэ
+  assert.equal(session.fullReport, undefined, 'хуучин fullReport үлдэх ЁСГҮЙ');
 
   // Зарах зорилготой байсан «teaser» нь «noticed» болсон
   assert.deepEqual(session.profile.noticed, ['a', 'b', 'c']);
@@ -44,10 +44,17 @@ test('хуучин «төлсөн» хэрэглэгч дахин эхлэх ш�
   assert.equal(session.shareNudgedAt, null);
 });
 
-test('гацсан «paid_pending» төлөв сэргэнэ', async () => {
-  await set('u:stuck', { ...emptySession(), state: 'paid_pending', paid: true });
-  const session = await getSession('stuck');
-  assert.equal(session.state, 'report_pending', 'шинэ нэртэй төлөв рүү шилжинэ');
+test('хуучирсан төлөвүүд ярианд буцна', async () => {
+  // Бүрэн тайлан гэж байхаа больсон тул түүнийг хүлээж байсан хүмүүс
+  // гацахгүйгээр шууд ярианд орох ёстой.
+  for (const old of ['paid_pending', 'report_pending', 'mirror', 'result']) {
+    await set('u:old-' + old, { ...emptySession(), state: old, profile: { type_name: 'x' } });
+    const s = await getSession('old-' + old);
+    assert.equal(s.state, 'chat', old + ' → chat');
+  }
+  // Профайлгүй бол эхнээс нь
+  await set('u:no-profile', { ...emptySession(), state: 'mirror', profile: null });
+  assert.equal((await getSession('no-profile')).state, 'idle');
 });
 
 test('шинэ хэрэглэгч цэвэр session авна', async () => {
@@ -117,17 +124,72 @@ test('санах ой ч мөн хямд давхаргаар анхдагчаа
   assert.ok(body.includes('openaiUpdateMemory'), 'хямд хувилбар байх ёстой');
 });
 
-test('анализ ба тайлан ҮРГЭЛЖ Claude дээр үлдэнэ', () => {
-  // Эдгээр нь хүн тутамд нэг удаа тул чанар нь зардлаас чухал.
+test('анализ ҮРГЭЛЖ Claude дээр үлдэнэ', () => {
+  // Хүн тутамд нэг удаа тул чанар нь зардлаас чухал.
   const claude = readFileSync(new URL('../lib/claude.js', import.meta.url), 'utf8');
-  for (const fn of ['analyzeQuick', 'generateFullReport']) {
-    const at = claude.indexOf(`export async function ${fn}`);
-    assert.ok(at > 0, `${fn} олдсонгүй`);
-    assert.ok(
-      claude.slice(at, at + 1200).includes('config.anthropicModel'),
-      `${fn} нь anthropicModel ашиглах ёстой`,
-    );
+  const at = claude.indexOf('export async function analyzeQuick');
+  assert.ok(at > 0, 'analyzeQuick олдсонгүй');
+  assert.ok(
+    claude.slice(at, at + 1200).includes('config.anthropicModel'),
+    'analyzeQuick нь anthropicModel ашиглах ёстой',
+  );
+});
+
+// ── Дүн шинжилгээ бол баримт бичиг биш, яриа ────────────────────────────
+
+/**
+ * ⚠️ Өмнө нь бот тестийн дараа 10 бүлэгтэй тайланг 6 мессежээр нэг дор
+ *    хаядаг байв. Хүн уншаад л өнгөрдөг — толгойд нь юу ч үлддэггүй.
+ *
+ *    Хэрэв хэн нэгэн ирээдүйд «бүрэн тайлан нэмье» гэвэл эдгээр тест унана.
+ */
+
+test('бүрэн тайлан үүсгэх / хаях код БАЙХГҮЙ', () => {
+  for (const file of ['../lib/flow.js', '../lib/claude.js', '../lib/prompts.js']) {
+    const src = readFileSync(new URL(file, import.meta.url), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
+    for (const dead of ['generateFullReport', 'formatFullReport', 'REPORT_CORE_SYSTEM']) {
+      assert.ok(!src.includes(dead), `${file} дотор ${dead} үлдсэн байна`);
+    }
   }
+});
+
+test('тестийн дараа ГАНЦ тусгал гараад шууд яриа эхэлнэ', () => {
+  const flow = readFileSync(new URL('../lib/flow.js', import.meta.url), 'utf8');
+  const at = flow.indexOf('async function sendMirror');
+  assert.ok(at > 0, 'sendMirror олдсонгүй');
+
+  // Функцийн биеийг ЯГ таслаж авна — тогтмол уртаар зүсвэл дараагийн
+  // функц руу орж, буруу тоолно.
+  const rest = flow.slice(at);
+  const body = rest.slice(0, rest.indexOf('\n}\n') + 3);
+
+  const sends = (body.match(/fb\.sendText\(/g) ?? []).length;
+  assert.ok(sends <= 2, `тусгал хамгийн ихдээ 2 мессеж байх ёстой, одоо ${sends}`);
+  assert.ok(body.includes("session.state = 'chat'"), 'шууд ярианд орох ёстой');
+  assert.ok(!body.includes('sendQuickReplies'), 'товч дарж тайлан хүлээх шат байх ЁСГҮЙ');
+});
+
+test('хөтөч бүх зүйлээ нэг дор хэлэхийг ХОРИГЛОСОН', () => {
+  const session = { profile: { type_name: 'x', summary: 's', strength: 'h', blind_spot: 'b' } };
+  const prompt = guideSystem(session);
+
+  assert.ok(prompt.includes('НЭГ ДОР БҮҮ ХАЯ'), 'аажмаар гаргах дүрэм байх ёстой');
+  assert.ok(prompt.includes('Нэг мессежид НЭГ ажиглалт'), 'нэг ажиглалтын дүрэм байх ёстой');
+  assert.ok(
+    prompt.includes('Хүн өөрийгөө ойлгох нь чиний ажил'),
+    'зорилгыг нь тодорхой хэлэх ёстой',
+  );
+});
+
+test('хөтөч тестийн хариултуудыг түүхий материал болгож хардаг', () => {
+  const answers = QUESTIONS.map((q) => ({ key: q.options[0].key, label: q.options[0].label }));
+  const prompt = guideSystem({ profile: { type_name: 'x' }, answers });
+
+  assert.ok(prompt.includes('ТЕСТИЙН ХАРИУЛТУУД'), 'хариултууд prompt-д байх ёстой');
+  assert.ok(prompt.includes(answers[0].label), 'тодорхой хариулт ишлэх боломжтой байх ёстой');
+  assert.ok(prompt.includes('нэг дор бүү тоочиж хэл'), 'нэг дор тоочихыг хориглох ёстой');
 });
 
 test('хоёр давхарга ИЖИЛ системийн prompt ашиглана', () => {
@@ -157,60 +219,6 @@ test('өмнөх өдрүүдийн бүртгэл хадгалагдана', ()
   touchActivity(session);
   assert.equal(session.activeDays.length, 3);
   assert.equal(session.activeDays[0], '2026-01-01', 'хуучин өдрүүд үлдэнэ');
-});
-
-// ── Тайланг Messenger-т бэлдэх ──────────────────────────────────────────
-
-const profile = { emoji: '🌱', type_name: 'Тайван ажиглагч', summary: 's' };
-const report = {
-  personality: 'Зан чанарын дэлгэрэнгүй тайлбар.',
-  strengths: ['Нэгдүгээр хүч', 'Хоёрдугаар хүч', 'Гуравдугаар хүч'],
-  weaknesses: 'Сул тал.',
-  hidden_potential: 'Далд боломж.',
-  relationship_style: 'Харилцаа.',
-  communication: 'Ярианы хэв маяг.',
-  career: 'Ажлын орчин.',
-  stress: 'Стресс.',
-  growth_tips: ['Эхний алхам', 'Хоёр дахь алхам'],
-  mirror_questions: ['Юу мэдэрсэн бэ?', 'Хэзээ ингэж эхэлсэн бэ?', 'Одоо юу хэрэгтэй вэ?'],
-};
-
-test('тайлан хэд хэдэн мессеж болж хуваагдана', () => {
-  const messages = formatFullReport(profile, report);
-  assert.ok(Array.isArray(messages), 'массив буцаах ёстой');
-  assert.ok(messages.length >= 5, `хангалттай хуваагдаагүй: ${messages.length}`);
-
-  // Бүх агуулга хаа нэгтээ байх ёстой
-  const all = messages.join('\n');
-  for (const piece of [
-    report.personality,
-    report.weaknesses,
-    report.hidden_potential,
-    report.career,
-    ...report.strengths,
-    ...report.growth_tips,
-    ...report.mirror_questions,
-  ]) {
-    assert.ok(all.includes(piece), `тайлангаас алдагдсан: ${piece}`);
-  }
-});
-
-test('тайлан хүнд шууд хандсан гарчигтай', () => {
-  const [first] = formatFullReport(profile, report);
-  assert.ok(first.includes('ЧИНИЙ'), 'хүнд шууд хандах ёстой («ТАНЫ» биш)');
-  assert.ok(first.includes(profile.type_name));
-});
-
-test('толин тусгалын асуултууд хариулт шаардахгүй', () => {
-  const messages = formatFullReport(profile, report);
-  const last = messages[messages.length - 1];
-  assert.ok(last.includes('хариулах шаардлагагүй'), 'дарамт үүсгэхгүй байх ёстой');
-});
-
-test('mirror_questions байхгүй бол тайлан бүтэн хэвээр', () => {
-  const messages = formatFullReport(profile, { ...report, mirror_questions: [] });
-  assert.ok(messages.length >= 5);
-  assert.ok(!messages.join('').includes('ҮЛДЭЭХ 3 АСУУЛТ'));
 });
 
 // ── Тестийн асуултууд ───────────────────────────────────────────────────

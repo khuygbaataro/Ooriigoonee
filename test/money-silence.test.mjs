@@ -7,8 +7,6 @@ import {
   MONEY_SILENCE,
   VOICE,
   FREE_ANALYST_SYSTEM,
-  REPORT_CORE_SYSTEM,
-  REPORT_APPLIED_SYSTEM,
   MEMORY_UPDATE_SYSTEM,
   guideSystem,
   chatSystem,
@@ -201,8 +199,6 @@ test('бүх системийн prompt мөнгөний чимээгүй бай�
   const withProfile = { profile: { type_name: 'x' }, chatHistory: [] };
   const prompts = {
     FREE_ANALYST_SYSTEM,
-    REPORT_CORE_SYSTEM,
-    REPORT_APPLIED_SYSTEM,
     'guideSystem': guideSystem(withProfile),
     'chatSystem (профайлтай)': chatSystem(withProfile),
     'chatSystem (профайлгүй)': chatSystem({ profile: null, chatHistory: [] }),

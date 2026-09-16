@@ -1,14 +1,12 @@
 import { getSession, deleteSession } from '../lib/store.js';
-import { deliverFullReport } from '../lib/flow.js';
-import { formatFullReport } from '../lib/report.js';
+import { showMirror } from '../lib/flow.js';
 import { isAuthorized, unauthorized, json } from '../lib/auth.js';
 
 /**
  * Админ хэрэгсэл. ADMIN_SECRET шаардана.
  *
  *   /api/admin?secret=X&action=view&psid=123      → session-ийг харах
- *   /api/admin?secret=X&action=report&psid=123    → бүрэн тайланг текстээр харах
- *   /api/admin?secret=X&action=send&psid=123      → тайланг чат руу нь илгээх
+ *   /api/admin?secret=X&action=send&psid=123      → тусгалыг чат руу нь дахин илгээх
  *   /api/admin?secret=X&action=reset&psid=123     → хэрэглэгчийн өгөгдлийг устгах
  *
  * ⚠️ «grant» action-ыг АВЧ ХАЯСАН — нээх зүйл байхгүй болсон. Бүх зүйл
@@ -37,7 +35,6 @@ export async function GET(request) {
       state: session.state,
       answered: session.answers.length,
       type: session.profile?.type_name ?? null,
-      hasFullReport: Boolean(session.fullReport),
 
       // Урт хугацааны тэмдэглэл — бот энэ хүний тухай юу санаж байгаа вэ.
       // Хөтөчлөлт «хазайсан» юм шиг санагдвал хамгийн түрүүнд эндээс хараарай.
@@ -61,23 +58,9 @@ export async function GET(request) {
     });
   }
 
-  if (action === 'report') {
-    if (!session.profile || !session.fullReport) {
-      return json({ ok: false, error: 'бүрэн тайлан хараахан үүсээгүй' }, 404);
-    }
-    // formatFullReport нь мессежүүдийн МАССИВ буцаана — нэгтгэж харуулна.
-    const text = formatFullReport(session.profile, session.fullReport).join(
-      '\n\n━━━━━━━━━━━━━━\n\n',
-    );
-    return new Response(text, {
-      status: 200,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-    });
-  }
-
   if (action === 'send') {
     if (!session.profile) return json({ ok: false, error: 'хэрэглэгч тест өгөөгүй' }, 400);
-    const delivered = await deliverFullReport(psid, session);
+    const delivered = await showMirror(psid, session);
     return json({ ok: true, action, psid, delivered });
   }
 
