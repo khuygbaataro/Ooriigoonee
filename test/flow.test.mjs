@@ -77,6 +77,70 @@ test('хязгаарын шалгалт зөвхөн тодорхой тоо т�
   );
 });
 
+// ── Зардлын чиглүүлэлт ──────────────────────────────────────────────────
+
+/**
+ * Ажил бүр хэр олон удаа давтагдахаас нь хамаарч давхаргаа сонгоно:
+ *   хүн тутамд НЭГ УДАА  → Claude (анализ, тайлан)
+ *   хүн тутамд ОЛОН ЗУУ  → OpenAI (яриа, санах ой)
+ *
+ * Хэрэв хэн нэгэн давтагддаг ажлыг үнэтэй давхарга руу буцаавал зардал
+ * ХҮНЭЭС биш МЕССЕЖЭЭС хамаарч өснө. Эдгээр тест түүнээс хамгаална.
+ */
+
+test('давтагддаг ажил анхдагчаар хямд давхарга дээр', () => {
+  assert.equal(config.chatProvider, 'openai', 'яриа ба санах ой хямд давхарга дээр байх ёстой');
+});
+
+test('профайлтай хүн ч гэсэн үнэтэй давхарга руу АЛБААР явахгүй', () => {
+  const flow = readFileSync(new URL('../lib/flow.js', import.meta.url), 'utf8');
+  const at = flow.indexOf('async function generateReply');
+  const body = flow.slice(at, at + 1600);
+
+  assert.ok(
+    !/useClaude\s*=\s*Boolean\(session\.profile\)/.test(body),
+    'профайл байгаа нь Claude-ыг албадах ЁСГҮЙ — тэр нь чатын зардлыг 10 дахин нэмнэ',
+  );
+  assert.ok(
+    body.includes("config.chatProvider === 'claude'"),
+    'давхаргыг зөвхөн тохиргоо шийдэх ёстой',
+  );
+});
+
+test('санах ой ч мөн хямд давхаргаар анхдагчаар явна', () => {
+  const flow = readFileSync(new URL('../lib/flow.js', import.meta.url), 'utf8');
+  const at = flow.indexOf('async function runMemoryUpdate');
+  assert.ok(at > 0, 'runMemoryUpdate олдсонгүй');
+
+  const body = flow.slice(at, at + 700);
+  assert.ok(body.includes("config.chatProvider === 'claude'"), 'тохиргоог дагах ёстой');
+  assert.ok(body.includes('openaiUpdateMemory'), 'хямд хувилбар байх ёстой');
+});
+
+test('анализ ба тайлан ҮРГЭЛЖ Claude дээр үлдэнэ', () => {
+  // Эдгээр нь хүн тутамд нэг удаа тул чанар нь зардлаас чухал.
+  const claude = readFileSync(new URL('../lib/claude.js', import.meta.url), 'utf8');
+  for (const fn of ['analyzeQuick', 'generateFullReport']) {
+    const at = claude.indexOf(`export async function ${fn}`);
+    assert.ok(at > 0, `${fn} олдсонгүй`);
+    assert.ok(
+      claude.slice(at, at + 1200).includes('config.anthropicModel'),
+      `${fn} нь anthropicModel ашиглах ёстой`,
+    );
+  }
+});
+
+test('хоёр давхарга ИЖИЛ системийн prompt ашиглана', () => {
+  // Хэрэглэгч аль давхарга хариулснаа мэдэх ёсгүй: ижил VOICE, ижил
+  // профайл, ижил урт хугацааны тэмдэглэл хоёуланд нь очно.
+  for (const file of ['../lib/claude.js', '../lib/openai.js']) {
+    const src = readFileSync(new URL(file, import.meta.url), 'utf8');
+    assert.ok(src.includes('guideSystem'), `${file} нь guideSystem ашиглах ёстой`);
+    assert.ok(src.includes('chatSystem'), `${file} нь chatSystem ашиглах ёстой`);
+    assert.ok(src.includes('MEMORY_UPDATE_SYSTEM'), `${file} нь санах ойг шинэчилж чадах ёстой`);
+  }
+});
+
 // ── Идэвхийн бүртгэл ────────────────────────────────────────────────────
 
 test('нэг өдөрт олон мессеж бичсэн ч нэг л өдөр тоологдоно', () => {
