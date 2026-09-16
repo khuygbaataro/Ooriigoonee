@@ -1,8 +1,8 @@
 {
-  "name": "messenger-ai-personality-bot",
-  "version": "1.0.0",
+  "name": "ooriigoo-nee",
+  "version": "2.0.0",
   "private": true,
-  "description": "Facebook Messenger AI chatbot — 10 асуултын зан чанарын тест, Claude-аар анализ, OpenAI-аар харилцаа. Vercel serverless.",
+  "description": "Өөрийгөө нээ — Facebook Messenger дээрх хүн шиг ярьдаг өөрийгөө таних хөтөч. 10 асуулт, бүрэн анализ, хязгааргүй яриа — бүгд үнэгүй. Vercel serverless.",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel --prod",
-    "check": "node --check api/webhook.js && node --check lib/flow.js && echo OK"
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check api/webhook.js && node --check lib/flow.js && npm test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
